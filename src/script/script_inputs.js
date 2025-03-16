@@ -1,6 +1,7 @@
 import { Fluid } from "./logic.js";
 
 document.addEventListener("mousemove", (e) => {
+    Fluid1.mousePos = [e.clientX, e.clientY];
 })
 
 document.getElementById("slider_1").addEventListener("input", e => {
@@ -38,8 +39,12 @@ document.getElementById("button_1").addEventListener("click", e => {
 })
 
 
+const fps = document.getElementById("fps");
+let newFps = 0;
+let accumulatedFps = [];
+
 let previous;
-let Fluid1 = new Fluid();
+let Fluid1 = new Fluid(2000); // 5000 particles	
 Fluid1.draw();
 
 function step(now) {
@@ -48,12 +53,23 @@ function step(now) {
     let delta = (now - previous) * 0.001; // seconds
     previous = now;
 
+    if (newFps > 0.5){
+        const average = array => array.reduce((a, b) => a + b) / array.length;
+
+        fps.innerHTML = "" + Math.floor(average(accumulatedFps)) + "fps";
+        newFps = 0;
+        accumulatedFps = [];
+    }
+    accumulatedFps.push(1 / delta);
+    newFps += delta;
+
     delta = Math.max(0.01, delta);
     delta = Math.min(0.03, delta);
 
-    if (delta == 0.01 || delta == 0.02){
-        console.log("delta was adjusted")
+    if (delta == 0.01 || delta == 0.03){
+      //  console.log("delta was adjusted")
     }
+
     Fluid1.update(delta);
     Fluid1.draw();
 
