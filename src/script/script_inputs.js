@@ -38,13 +38,22 @@ document.getElementById("button_1").addEventListener("click", e => {
     })
 })
 
+window.addEventListener("pointerdown", e => {
+    console.log("pointerDown");
+    Fluid1.mousePressed = true;
+})
+
+window.addEventListener("pointerup", e => {
+    console.log("pointerUp");
+    Fluid1.mousePressed = false;
+})
 
 const fps = document.getElementById("fps");
 let newFps = 0;
 let accumulatedFps = [];
 
 let previous;
-let Fluid1 = new Fluid(2000); // 5000 particles	
+let Fluid1 = new Fluid(1000); // 5000 particles	
 Fluid1.draw();
 
 function step(now) {

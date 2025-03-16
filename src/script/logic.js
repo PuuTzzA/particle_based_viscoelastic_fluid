@@ -74,7 +74,7 @@ class GraphicsSettings {
 
         let hue = this.velocityRange[0] + (this.velocityRange[1] - this.velocityRange[0]) * (magnitude - this.minSpeed) / (this.maxSpeed - this.minSpeed);
 
-        return particle.selected ? "red" : `hsla(${hue}, 100%, 50%, 1)`;
+        return particle.selected ? "white" : `hsla(${hue}, 100%, 50%, 1)`;
     }
 }
 
@@ -147,13 +147,13 @@ class HashGrid {
         return queryIterator(this.count, this.condensedArray, this.tableSize);
     }
 
-    queryWithoutIterator(position, radius) {
+    queryWithoutIterator(position) {
         this.queryCount = 0;
 
-        const xMin = this.intCoords(position[0] - radius);
-        const xMax = this.intCoords(position[0] + radius);
-        const yMin = this.intCoords(position[1] - radius);
-        const yMax = this.intCoords(position[1] + radius);
+        const xMin = this.intCoords(position[0]) - 1;
+        const xMax = this.intCoords(position[0]) + 1;
+        const yMin = this.intCoords(position[1]) - 1; 
+        const yMax = this.intCoords(position[1]) + 1;
 
         for (let xi = xMin; xi <= xMax; xi++) {
             for (let yi = yMin; yi <= yMax; yi++) {
@@ -178,11 +178,14 @@ export class Fluid {
         this.gravity = [0, 3000];
         this.influenceRadius = 35; // h
         this.restDensity = 1; // p0
-        const n = 500
+        const n = 500;
         this.stiffness = 1 * n; // k
         this.nearStiffness = 0.5 * n; // kN
 
         this.mousePos = [0, 0];
+        this.mousePosPrev = [0, 0];
+        this.mouseRadius = 80;
+        this.mousePressed = false;
         this.hashGrid = new HashGrid(numParticles, this.influenceRadius);
 
         canvas.width = window.innerWidth;
@@ -204,6 +207,10 @@ export class Fluid {
 
     doubleDensityRelaxation(dt) {
         this.particles.forEach(particle => {
+            if (this.mousePressed && particle.selected){
+                return;
+            }
+
             let density = 0; // phi
             let densityNear = 0; // phiN
 
@@ -318,12 +325,22 @@ export class Fluid {
             particle.selected = 0;
         })
 
-        for (const i of this.hashGrid.query(this.mousePos, this.influenceRadius)) {
-            this.particles[i].selected = 1;
+        for (const i of this.hashGrid.query(this.mousePos, this.mouseRadius)) {
+            const other = this.particles[i];
+
+            const dx = other.position[0] - this.mousePos[0];
+            const dy = other.position[1] - this.mousePos[1];
+
+            if (Math.sqrt(dx * dx + dy * dy) < this.mouseRadius) {
+                other.selected = 1;
+            }
         }
 
         // apply gravity
         this.particles.forEach(particle => {
+            if (this.mousePressed && particle.selected){
+                return;
+            }
             particle.velocity[0] += dt * this.gravity[0];
             particle.velocity[1] += dt * this.gravity[1];
 
@@ -334,6 +351,10 @@ export class Fluid {
 
         this.particles.forEach(particle => {
             particle.positionPrevious = [...particle.position];
+
+            if (this.mousePressed && particle.selected){
+                return;
+            }
 
             particle.position[0] += dt * particle.velocity[0];
             particle.position[1] += dt * particle.velocity[1];
@@ -348,8 +369,19 @@ export class Fluid {
         this.doubleDensityRelaxation(dt);
         this.resolveCollisions();
 
+        const mouseDelta = [this.mousePos[0] - this.mousePosPrev[0], this.mousePos[1] - this.mousePosPrev[1]]
+        this.mousePosPrev = [...this.mousePos];
+
+
         // calculate velocities
         this.particles.forEach(particle => {
+            if (this.mousePressed) {
+                if (particle.selected) {
+                    particle.position[0] += mouseDelta[0];
+                    particle.position[1] += mouseDelta[1];
+                }
+            }
+
             particle.velocity[0] = (particle.position[0] - particle.positionPrevious[0]) / dt;
             particle.velocity[1] = (particle.position[1] - particle.positionPrevious[1]) / dt;
         })
@@ -371,11 +403,5 @@ export class Fluid {
             ctx.stroke();
             ctx.fill();
         })
-
-        ctx.strokeStyle = "green";
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(this.mousePos[0], this.mousePos[1], this.influenceRadius, 0, Math.PI * 2, true);
-        ctx.stroke();
     }
 }
