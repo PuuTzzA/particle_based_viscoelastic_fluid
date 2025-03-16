@@ -16,7 +16,7 @@ body {
 .canvas-container{
     width: 100%;
     height: 100vh;
-    background-color: blue;
+    background-color: black;
     padding: 0;
     margin: 0;
     display: flex;    
