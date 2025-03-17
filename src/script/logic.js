@@ -186,8 +186,9 @@ export class Fluid {
 
         this.mousePos = [0, 0];
         this.mousePosPrev = [0, 0];
-        this.mouseRadius = 80;
+        this.mouseRadius = 100;
         this.mousePressed = false;
+        this.mouseForce = 200;
         this.hashGrid = new HashGrid(numParticles, this.influenceRadius);
 
         canvas.width = window.innerWidth;
@@ -210,10 +211,6 @@ export class Fluid {
     doubleDensityRelaxation(dt) {
         for (let i = 0, n = this.particles.length; i < n; i++) {
             const particle = this.particles[i];
-
-            if (this.mousePressed && particle.selected) {
-                continue;
-            }
 
             let density = 0; // phi
             let densityNear = 0; // phiN
@@ -288,6 +285,10 @@ export class Fluid {
                 deltaPosition[1] -= (displacement * unitvector[1]) / 2;
             }
 
+            if (this.mousePressed && particle.selected) {
+                continue;
+            }
+
             particle.position[0] += deltaPosition[0];
             particle.position[1] += deltaPosition[1];
         }
@@ -340,6 +341,16 @@ export class Fluid {
             if (this.mousePressed && particle.selected) {
                 continue;
             }
+
+            /* if (this.mousePressed && particle.selected) {
+                let dirToInput = [this.mousePos[0] - particle.position[0], this.mousePos[1] - particle.position[1]];
+                let dst = Math.sqrt(dirToInput[0] * dirToInput[0] + dirToInput[1] * dirToInput[1]);
+                dst = Math.max(dst, 0.0001);
+                let t = 1 - dst / this.mouseRadius;
+                particle.velocity[0] += dt * t * dirToInput[0] * this.mouseForce;
+                particle.velocity[1] += dt * t * dirToInput[1] * this.mouseForce;
+            } */
+
             particle.velocity[0] += dt * this.gravity[0];
             particle.velocity[1] += dt * this.gravity[1];
         }
@@ -355,6 +366,8 @@ export class Fluid {
             if (this.mousePressed && particle.selected) {
                 continue;
             }
+
+
 
             particle.position[0] += dt * particle.velocity[0];
             particle.position[1] += dt * particle.velocity[1];
