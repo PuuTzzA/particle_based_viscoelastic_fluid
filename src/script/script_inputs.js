@@ -26,25 +26,23 @@ document.getElementById("slider_4").addEventListener("input", e => {
 
 document.getElementById("button_1").addEventListener("click", e => {
     // console.log("button_1");
-/*     console.log("Advanced");
-
-    for (let i = 0; i < 1; i++) {
-        Fluid1.update(22);
-    }
-
-    Fluid1.draw(); */
+    /*     console.log("Advanced");
+    
+        for (let i = 0; i < 1; i++) {
+            Fluid1.update(22);
+        }
+    
+        Fluid1.draw(); */
     Fluid1.particles.forEach(p => {
         console.log(p.position);
     })
 })
 
 window.addEventListener("pointerdown", e => {
-    console.log("pointerDown");
     Fluid1.mousePressed = true;
 })
 
 window.addEventListener("pointerup", e => {
-    console.log("pointerUp");
     Fluid1.mousePressed = false;
 })
 
@@ -53,7 +51,7 @@ let newFps = 0;
 let accumulatedFps = [];
 
 let previous;
-let Fluid1 = new Fluid(1000); // 5000 particles	
+let Fluid1 = new Fluid(2000); // 5000 particles	
 Fluid1.draw();
 
 function step(now) {
@@ -62,7 +60,7 @@ function step(now) {
     let delta = (now - previous) * 0.001; // seconds
     previous = now;
 
-    if (newFps > 0.5){
+    if (newFps > 0.5) {
         const average = array => array.reduce((a, b) => a + b) / array.length;
 
         fps.innerHTML = "" + Math.floor(average(accumulatedFps)) + "fps";
@@ -72,11 +70,13 @@ function step(now) {
     accumulatedFps.push(1 / delta);
     newFps += delta;
 
-    delta = Math.max(0.01, delta);
-    delta = Math.min(0.03, delta);
+    const minDelta = 0.01;
+    const maxDelta = 0.02;
+    delta = Math.max(minDelta, delta);
+    delta = Math.min(maxDelta, delta);
 
-    if (delta == 0.01 || delta == 0.03){
-      //  console.log("delta was adjusted")
+    if (delta == minDelta || delta == maxDelta) {
+        console.log("delta was adjusted")
     }
 
     Fluid1.update(delta);

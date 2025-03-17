@@ -52,8 +52,8 @@ class GraphicsSettings {
         this.lineColour = "rgba(255, 255, 255, 0)";
         this.particleSize = 3;
         this.minSpeed = 0;
-        this.maxSpeed = 700;
-        this.velocityRange = [170, 0]; // "colorramp" [hue_for_min_speed, hue_for_max_speed]
+        this.maxSpeed = 2000;
+        this.velocityRange = [250, 10]; // "colorramp" [hue_for_min_speed, hue_for_max_speed]
     }
 
     getLineWidth() {
@@ -152,7 +152,7 @@ class HashGrid {
 
         const xMin = this.intCoords(position[0]) - 1;
         const xMax = this.intCoords(position[0]) + 1;
-        const yMin = this.intCoords(position[1]) - 1; 
+        const yMin = this.intCoords(position[1]) - 1;
         const yMax = this.intCoords(position[1]) + 1;
 
         for (let xi = xMin; xi <= xMax; xi++) {
@@ -206,9 +206,11 @@ export class Fluid {
     }
 
     doubleDensityRelaxation(dt) {
-        this.particles.forEach(particle => {
-            if (this.mousePressed && particle.selected){
-                return;
+        for (let i = 0, n = this.particles.length; i < n; i++) {
+            const particle = this.particles[i];
+
+            if (this.mousePressed && particle.selected) {
+                continue;
             }
 
             let density = 0; // phi
@@ -218,7 +220,7 @@ export class Fluid {
 
             this.hashGrid.queryWithoutIterator(particle.position, this.influenceRadius * 1.2)
 
-            for (let potNeighbourId = 0; potNeighbourId < this.hashGrid.queryCount; potNeighbourId++) {
+            for (let potNeighbourId = 0, max = this.hashGrid.queryCount; potNeighbourId < max; potNeighbourId++) {
                 let otherParticle = this.particles[this.hashGrid.queryResultArray[potNeighbourId]];
 
                 const dx = otherParticle.position[0] - particle.position[0];
@@ -257,7 +259,9 @@ export class Fluid {
 
             let deltaPosition = [0, 0];
 
-            neighbours.forEach(neighbour => {
+            for (let j = 0, neighboursLenght = neighbours.length; j < neighboursLenght; j++) {
+                const neighbour = neighbours[j];
+
                 const dx = neighbour.position[0] - particle.position[0];
                 const dy = neighbour.position[1] - particle.position[1];
                 const r = Math.sqrt(dx * dx + dy * dy);
@@ -280,15 +284,17 @@ export class Fluid {
 
                 deltaPosition[0] -= (displacement * unitvector[0]) / 2;
                 deltaPosition[1] -= (displacement * unitvector[1]) / 2;
-            });
+            }
 
             particle.position[0] += deltaPosition[0];
             particle.position[1] += deltaPosition[1];
-        });
+        }
     }
 
     resolveCollisions() {
-        this.particles.forEach(particle => {
+        for (let i = 0, n = this.particles.length; i < n; i++) {
+            const particle = this.particles[i];
+
             if (particle.position[0] < 0) {
                 particle.position[0] = 0;
             }
@@ -304,26 +310,15 @@ export class Fluid {
             if (particle.position[1] > canvas.height) {
                 particle.position[1] = canvas.height;
             }
-        });
-
-        let x = []
-        this.particles.forEach(particle => {
-            let dx = particle.position[0] - 0;
-            let dy = particle.position[1] - canvas.height;
-
-
-            if (Math.sqrt(dx * dx + dy * dy) < 0.01) {
-                x.push(particle)
-            }
-        })
+        }
     }
 
     update(dt) {
         this.hashGrid.update(this.particles);
 
-        this.particles.forEach(particle => {
-            particle.selected = 0;
-        })
+        for (let i = 0, n = this.particles.length; i < n; i++) {
+            this.particles[i].selected = 0;
+        }
 
         for (const i of this.hashGrid.query(this.mousePos, this.mouseRadius)) {
             const other = this.particles[i];
@@ -337,28 +332,31 @@ export class Fluid {
         }
 
         // apply gravity
-        this.particles.forEach(particle => {
+        for (let i = 0, n = this.particles.length; i < n; i++) {
+            const particle = this.particles[i];
+
             if (this.mousePressed && particle.selected){
-                return;
+                continue;
             }
             particle.velocity[0] += dt * this.gravity[0];
             particle.velocity[1] += dt * this.gravity[1];
-
-        });
+        }
 
         // modify velocities with pairwise viscosity impulses
         this.applyViscosity();
 
-        this.particles.forEach(particle => {
+        for (let i = 0, n = this.particles.length; i < n; i++) {
+            const particle = this.particles[i];
+
             particle.positionPrevious = [...particle.position];
 
-            if (this.mousePressed && particle.selected){
-                return;
+            if (this.mousePressed && particle.selected) {
+                continue;
             }
 
             particle.position[0] += dt * particle.velocity[0];
             particle.position[1] += dt * particle.velocity[1];
-        });
+        }
 
         // add and remove springs, change rest lengths
         this.adjustSprings();
@@ -374,7 +372,9 @@ export class Fluid {
 
 
         // calculate velocities
-        this.particles.forEach(particle => {
+        for (let i = 0, n = this.particles.length; i < n; i++) {
+            const particle = this.particles[i];
+
             if (this.mousePressed) {
                 if (particle.selected) {
                     particle.position[0] += mouseDelta[0];
@@ -384,7 +384,8 @@ export class Fluid {
 
             particle.velocity[0] = (particle.position[0] - particle.positionPrevious[0]) / dt;
             particle.velocity[1] = (particle.position[1] - particle.positionPrevious[1]) / dt;
-        })
+
+        }
     }
 
     draw() {
@@ -395,13 +396,16 @@ export class Fluid {
         ctx.strokeStyle = this.gs.getLineColour();
         ctx.lineWidth = this.gs.getLineWidth();
 
-        this.particles.forEach(particle => {
+        for (let i = 0, n = this.particles.length; i < n; i++) {
+            const particle = this.particles[i];
+
             ctx.fillStyle = this.gs.getParticleColour(particle);
 
             ctx.beginPath();
             ctx.arc(particle.position[0], particle.position[1], this.gs.getParticleRadius(), 0, Math.PI * 2, true); // Outer circle
             ctx.stroke();
             ctx.fill();
-        })
+
+        }
     }
 }
