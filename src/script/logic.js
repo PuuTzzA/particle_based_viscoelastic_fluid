@@ -53,7 +53,7 @@ class GraphicsSettings {
         this.particleSize = 3;
         this.minSpeed = 0;
         this.maxSpeed = 2000;
-        this.velocityRange = [250, 10]; // "colorramp" [hue_for_min_speed, hue_for_max_speed]
+        this.velocityRange = [350, 110]; // "colorramp" [hue_for_min_speed, hue_for_max_speed]
     }
 
     getLineWidth() {
@@ -175,12 +175,14 @@ export class Fluid {
         this.particles = []
         this.gs = new GraphicsSettings();
 
-        this.gravity = [0, 3000];
-        this.influenceRadius = 35; // h
-        this.restDensity = 1; // p0
-        const n = 500;
-        this.stiffness = 1 * n; // k
+        this.gravity = [0, 1000];
+        this.influenceRadius = 40; // h
+        this.restDensity = 5; // p0
+        const n = 100;
+        this.stiffness = .5 * n; // k
         this.nearStiffness = 0.5 * n; // kN
+
+        this.maxDistancePerFrame = Number.MAX_VALUE;
 
         this.mousePos = [0, 0];
         this.mousePosPrev = [0, 0];
@@ -277,7 +279,7 @@ export class Fluid {
                     unitvector = [unitvector[0] / norm, unitvector[1] / norm];
                 };
 
-                const displacement = dt * dt * (pressure * (1 - q) + pressureNear * (1 - q) * (1 - q));
+                const displacement = dt * (pressure * (1 - q) + pressureNear * (1 - q) * (1 - q)); // normally with second * dt
 
                 neighbour.position[0] += (displacement * unitvector[0]) / 2;
                 neighbour.position[1] += (displacement * unitvector[1]) / 2;
@@ -335,7 +337,7 @@ export class Fluid {
         for (let i = 0, n = this.particles.length; i < n; i++) {
             const particle = this.particles[i];
 
-            if (this.mousePressed && particle.selected){
+            if (this.mousePressed && particle.selected) {
                 continue;
             }
             particle.velocity[0] += dt * this.gravity[0];
@@ -382,9 +384,22 @@ export class Fluid {
                 }
             }
 
+            /* const dx = particle.position[0] - particle.positionPrevious[0];
+            const dy = particle.position[1] - particle.positionPrevious[1];
+
+            if (!particle.selected && Math.sqrt(dx * dx + dy * dy) > this.maxDistancePerFrame) {                
+                let dir = [particle.position[0] - particle.positionPrevious[0], particle.position[1] - particle.positionPrevious[1]];
+                const len = Math.sqrt(dir[0] * dir[0] + dir[1] * dir[1]);
+                dir[0] /= len;
+                dir[1] /= len;
+
+                particle.position = [particle.positionPrevious[0] + this.maxDistancePerFrame * dir[0], particle.positionPrevious[1] + this.maxDistancePerFrame * dir[1]];
+                // particle.position = [...particle.positionPrevious];
+            } */
+
+
             particle.velocity[0] = (particle.position[0] - particle.positionPrevious[0]) / dt;
             particle.velocity[1] = (particle.position[1] - particle.positionPrevious[1]) / dt;
-
         }
     }
 
@@ -405,7 +420,6 @@ export class Fluid {
             ctx.arc(particle.position[0], particle.position[1], this.gs.getParticleRadius(), 0, Math.PI * 2, true); // Outer circle
             ctx.stroke();
             ctx.fill();
-
         }
     }
 }

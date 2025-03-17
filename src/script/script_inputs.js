@@ -1,9 +1,5 @@
 import { Fluid } from "./logic.js";
 
-document.addEventListener("mousemove", (e) => {
-    Fluid1.mousePos = [e.clientX, e.clientY];
-})
-
 document.getElementById("slider_1").addEventListener("input", e => {
     document.getElementById("slider_1_out").innerHTML = e.target.value;
     // console.log(e.target.value);
@@ -36,6 +32,10 @@ document.getElementById("button_1").addEventListener("click", e => {
     Fluid1.particles.forEach(p => {
         console.log(p.position);
     })
+})
+
+document.addEventListener("mousemove", (e) => {
+    Fluid1.mousePos = [e.clientX, e.clientY];
 })
 
 window.addEventListener("pointerdown", e => {
@@ -71,7 +71,7 @@ function step(now) {
     newFps += delta;
 
     const minDelta = 0.01;
-    const maxDelta = 0.02;
+    const maxDelta = 0.05;
     delta = Math.max(minDelta, delta);
     delta = Math.min(maxDelta, delta);
 
@@ -79,6 +79,7 @@ function step(now) {
         console.log("delta was adjusted")
     }
 
+    //console.log(delta)
     Fluid1.update(delta);
     Fluid1.draw();
 
