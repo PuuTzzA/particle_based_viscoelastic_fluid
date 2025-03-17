@@ -51,7 +51,7 @@ let newFps = 0;
 let accumulatedFps = [];
 
 let previous;
-let Fluid1 = new Fluid(2000); // 5000 particles	
+let Fluid1 = new Fluid(1000); // 5000 particles	
 Fluid1.draw();
 
 function step(now) {

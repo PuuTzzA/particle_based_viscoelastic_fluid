@@ -181,6 +181,8 @@ export class Fluid {
         const n = 100;
         this.stiffness = .5 * n; // k
         this.nearStiffness = 0.5 * n; // kN
+        this.linearViscosity = 0; // sigma, for highly viscous fluids, else 0
+        this.quadraticViscostiy = 0.01; // beta 
 
         this.maxDistancePerFrame = Number.MAX_VALUE;
 
@@ -199,7 +201,50 @@ export class Fluid {
         }
     }
 
-    applyViscosity() {
+    applyViscosity(dt) {
+        for (let i = 0, n = this.particles.length; i < n; i++) {
+            const particle = this.particles[i];
+
+            this.hashGrid.queryWithoutIterator(particle.position, this.influenceRadius * 1.2)
+
+            for (let potNeighbourId = 0, max = this.hashGrid.queryCount; potNeighbourId < max; potNeighbourId++) {
+                //if (this.hashGrid.queryResultArray[potNeighbourId] >= i) { continue };
+
+                let otherParticle = this.particles[this.hashGrid.queryResultArray[potNeighbourId]];
+
+                const dx = otherParticle.position[0] - particle.position[0];
+                const dy = otherParticle.position[1] - particle.position[1];
+                const r = Math.sqrt(dx * dx + dy * dy);
+
+                let q = r / this.influenceRadius;
+
+                if (q < 1) {
+                    let dir = [0, 0];
+                    if (r > 0) {
+                        dir = [dx / r, dy / r];
+                    }
+                    let u = (particle.velocity[0] - otherParticle.velocity[0]) * dir[0] + (particle.velocity[1] - otherParticle.velocity[1]) * dir[1];
+
+                    if (!isFinite(u)) {
+                        console.error("NaN detected in u", { particle, otherParticle, dir });
+                        return; // Exit early if NaN is found
+                    }
+
+                    if (u > 0) {
+                        let impulse = dt * (1 - q) * (this.linearViscosity * u + this.quadraticViscostiy * u * u);
+                        const minMax = 100000;
+
+                        impulse = Math.min(Math.max(impulse, -minMax), minMax); // Clamp to prevent excessive changes
+    
+                        particle.velocity[0] -= impulse * dir[0] / 2;
+                        particle.velocity[1] -= impulse * dir[1] / 2;
+
+                        otherParticle.velocity[0] += impulse * dir[0] / 2;
+                        otherParticle.velocity[1] += impulse * dir[1] / 2;
+                    }
+                }
+            }
+        }
     }
 
     adjustSprings() {
@@ -241,12 +286,12 @@ export class Fluid {
                 const dx = otherParticle.position[0] - particle.position[0];
                 const dy = otherParticle.position[1] - particle.position[1];
                 const r = Math.sqrt(dx * dx + dy * dy);
-
+ 
                 let q = r / this.influenceRadius;
-
+ 
                 if (q < 1) {
                     neighbours.push(otherParticle);
-
+ 
                     q = 1 - q;
                     density += q * q
                     densityNear += q * q * q;
@@ -356,7 +401,7 @@ export class Fluid {
         }
 
         // modify velocities with pairwise viscosity impulses
-        this.applyViscosity();
+        this.applyViscosity(dt);
 
         for (let i = 0, n = this.particles.length; i < n; i++) {
             const particle = this.particles[i];
@@ -399,13 +444,13 @@ export class Fluid {
 
             /* const dx = particle.position[0] - particle.positionPrevious[0];
             const dy = particle.position[1] - particle.positionPrevious[1];
-
+ 
             if (!particle.selected && Math.sqrt(dx * dx + dy * dy) > this.maxDistancePerFrame) {                
                 let dir = [particle.position[0] - particle.positionPrevious[0], particle.position[1] - particle.positionPrevious[1]];
                 const len = Math.sqrt(dir[0] * dir[0] + dir[1] * dir[1]);
                 dir[0] /= len;
                 dir[1] /= len;
-
+ 
                 particle.position = [particle.positionPrevious[0] + this.maxDistancePerFrame * dir[0], particle.positionPrevious[1] + this.maxDistancePerFrame * dir[1]];
                 // particle.position = [...particle.positionPrevious];
             } */
