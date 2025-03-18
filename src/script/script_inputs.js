@@ -80,7 +80,7 @@ function step(now) {
     }
 
     //console.log(delta)
-    Fluid1.update(delta);
+    Fluid1.update(0.01);
     Fluid1.draw();
 
     requestAnimationFrame(step);

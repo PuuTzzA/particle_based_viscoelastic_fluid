@@ -46,6 +46,14 @@ class Particle {
     }
 }
 
+class Spring {
+    constructor(restLength, i, j) {
+        this.restLength = restLength;
+        this.i = i;
+        this.j = j;
+    }
+}
+
 class GraphicsSettings {
     constructor() {
         this.lineWidth = 0;
@@ -172,7 +180,8 @@ class HashGrid {
 
 export class Fluid {
     constructor(numParticles) {
-        this.particles = []
+        this.particles = [];
+        this.springs = new Map();
         this.gs = new GraphicsSettings();
 
         this.gravity = [0, 1000];
@@ -183,6 +192,11 @@ export class Fluid {
         this.nearStiffness = 0.5 * n; // kN
         this.linearViscosity = 0; // sigma, for highly viscous fluids, else 0
         this.quadraticViscostiy = 0.01; // beta 
+
+        this.springInitRestLenght = 20;
+        this.springStiffness = 100; // kSpring
+        this.alpha = 0.5; // alpha, yield ratio
+        this.yieldRate = 0.2; // gamma, yield ratio
 
         this.maxDistancePerFrame = Number.MAX_VALUE;
 
@@ -205,10 +219,10 @@ export class Fluid {
         for (let i = 0, n = this.particles.length; i < n; i++) {
             const particle = this.particles[i];
 
-            this.hashGrid.queryWithoutIterator(particle.position, this.influenceRadius * 1.2)
+            this.hashGrid.queryWithoutIterator(particle.position)
 
             for (let potNeighbourId = 0, max = this.hashGrid.queryCount; potNeighbourId < max; potNeighbourId++) {
-                //if (this.hashGrid.queryResultArray[potNeighbourId] >= i) { continue };
+                if (this.hashGrid.queryResultArray[potNeighbourId] >= i) { continue };
 
                 let otherParticle = this.particles[this.hashGrid.queryResultArray[potNeighbourId]];
 
@@ -235,7 +249,7 @@ export class Fluid {
                         const minMax = 100000;
 
                         impulse = Math.min(Math.max(impulse, -minMax), minMax); // Clamp to prevent excessive changes
-    
+
                         particle.velocity[0] -= impulse * dir[0] / 2;
                         particle.velocity[1] -= impulse * dir[1] / 2;
 
@@ -247,10 +261,93 @@ export class Fluid {
         }
     }
 
-    adjustSprings() {
+    hash(i, j) {
+        return i * 1528333 + j;
     }
 
-    applySpringDisplacement() {
+    adjustSprings(dt) {
+        for (let i = 0, n = this.particles.length; i < n; i++) {
+            const particle = this.particles[i];
+
+            this.hashGrid.queryWithoutIterator(particle.position)
+
+            for (let potNeighbourId = 0, max = this.hashGrid.queryCount; potNeighbourId < max; potNeighbourId++) {
+                const j = this.hashGrid.queryResultArray[potNeighbourId];
+                if (j >= i) { continue };
+
+                let otherParticle = this.particles[j];
+
+                const dx = otherParticle.position[0] - particle.position[0];
+                const dy = otherParticle.position[1] - particle.position[1];
+                const r = Math.sqrt(dx * dx + dy * dy);
+
+                let q = r / this.springInitRestLenght;
+
+                if (q < 1) {
+                    const hash = this.hash(i, j);
+                    if (!this.springs.has(hash)) {
+                        this.springs.set(hash, new Spring(this.springInitRestLenght, i, j));
+                    }
+
+                    const spring = this.springs.get(hash);
+
+                    let d = this.yieldRate * spring.restLength;
+
+                    if (r > spring.restLength + d) { // stretch
+                        //console.log("grow rest length")
+                        spring.restLength += dt * this.alpha * (r - spring.restLength - d);
+                    } else if (r < spring.restLength - d) { // compress
+                        spring.restLength -= dt * this.alpha * (spring.restLength - d - r);
+                    }
+                }
+            }
+        }
+
+        this.springs.forEach((spring, hash) => {
+            const particle = this.particles[spring.i];
+            const otherParticle = this.particles[spring.j];
+
+            const dx = otherParticle.position[0] - particle.position[0];
+            const dy = otherParticle.position[1] - particle.position[1];
+            const r = Math.sqrt(dx * dx + dy * dy);
+
+            if (spring.restLength > this.springInitRestLenght || r > this.influenceRadius && (particle.selected || otherParticle.selected)) {
+                this.springs.delete(hash);
+            }
+        })
+        console.log(this.springs.size)
+    }
+
+    applySpringDisplacement(dt) {
+        this.springs.forEach((spring, hash) => {
+            const particle = this.particles[spring.i];
+            const otherParticle = this.particles[spring.j];
+
+            if (this.mousePressed && particle.selected) { return; };
+
+            const dx = otherParticle.position[0] - particle.position[0];
+            const dy = otherParticle.position[1] - particle.position[1];
+            const r = Math.sqrt(dx * dx + dy * dy);
+
+            let dir = [0, 0];
+            if (r > 0) {
+                dir = [dx / r, dy / r];
+            }
+
+            let displacement = dt * this.springStiffness * (1 - spring.restLength / this.influenceRadius) * (spring.restLength - r);
+
+            /* if (!isFinite(u)) {
+                console.error("NaN detected in u", { particle, otherParticle, dir });
+                return; // Exit early if NaN is found
+            } */
+
+            particle.position[0] -= displacement * dir[0] / 2;
+            particle.position[1] -= displacement * dir[1] / 2;
+
+            otherParticle.position[0] += displacement * dir[0] / 2;
+            otherParticle.position[1] += displacement * dir[1] / 2;
+
+        });
     }
 
     doubleDensityRelaxation(dt) {
@@ -262,7 +359,7 @@ export class Fluid {
 
             let neighbours = [];
 
-            this.hashGrid.queryWithoutIterator(particle.position, this.influenceRadius * 1.2)
+            this.hashGrid.queryWithoutIterator(particle.position)
 
             for (let potNeighbourId = 0, max = this.hashGrid.queryCount; potNeighbourId < max; potNeighbourId++) {
                 let otherParticle = this.particles[this.hashGrid.queryResultArray[potNeighbourId]];
@@ -419,11 +516,11 @@ export class Fluid {
         }
 
         // add and remove springs, change rest lengths
-        this.adjustSprings();
+        this.adjustSprings(dt);
 
         // modify positions according to springs
         // double density relaxation and collisions
-        this.applySpringDisplacement();
+        this.applySpringDisplacement(dt);
         this.doubleDensityRelaxation(dt);
         this.resolveCollisions();
 
