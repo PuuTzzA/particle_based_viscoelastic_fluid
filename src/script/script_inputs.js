@@ -88,6 +88,7 @@ function restart() {
     const springS = fluid.springStiffness;
     const yield = fluid.yieldRate;
     const alpha = fluid.plasticity;
+    const gravity = fluid.gravity;
 
     fluid = new Fluid(fluidAmount);
     fluid.restDensity = rD;
@@ -98,6 +99,7 @@ function restart() {
     fluid.springStiffness = springS;
     fluid.yieldRate = yield;
     fluid.plasticity = alpha;
+    fluid.gravity = gravity;
 
     fluid.draw();
 }
