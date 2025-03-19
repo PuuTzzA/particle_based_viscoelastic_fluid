@@ -1,63 +1,152 @@
-import { Fluid } from "./logic.js";
-
-document.getElementById("slider_1").addEventListener("input", e => {
-    document.getElementById("slider_1_out").innerHTML = e.target.value;
-    // console.log(e.target.value);
-})
-
-document.getElementById("slider_2").addEventListener("input", e => {
-    document.getElementById("slider_2_out").innerHTML = e.target.value;
-    // console.log(e.target.value);
-})
-
-document.getElementById("slider_3").addEventListener("input", e => {
-    document.getElementById("slider_3_out").innerHTML = e.target.value;
-    // console.log(e.target.value);
-})
-
-document.getElementById("slider_4").addEventListener("input", e => {
-    document.getElementById("slider_4_out").innerHTML = e.target.value;
-    // console.log(e.target.value);
-})
-
-document.getElementById("button_1").addEventListener("click", e => {
-    // console.log("button_1");
-    /*     console.log("Advanced");
-    
-        for (let i = 0; i < 1; i++) {
-            Fluid1.update(22);
-        }
-    
-        Fluid1.draw(); */
-    Fluid1.particles.forEach(p => {
-        console.log(p.position);
-    })
-})
-
+// import { Fluid } from "./logic.js";
 document.addEventListener("mousemove", (e) => {
-    Fluid1.mousePos = [e.clientX, e.clientY];
+    fluid.mousePos = [e.clientX, e.clientY];
 })
 
 window.addEventListener("pointerdown", e => {
-    Fluid1.mousePressed = true;
+    fluid.mousePressed = true;
 })
 
 window.addEventListener("pointerup", e => {
-    Fluid1.mousePressed = false;
+    fluid.mousePressed = false;
 })
 
 const fps = document.getElementById("fps");
 let newFps = 0;
 let accumulatedFps = [];
 
+let running = true;
+let delta = 0.01;
 let previous;
-let Fluid1 = new Fluid(1000); // 5000 particles	
-Fluid1.draw();
+let fluidAmount = 1000;
+let fluid = new Fluid(fluidAmount); // 5000 particles	
+fluid.draw();
+
+function toggleDetailedOptions(){
+    document.getElementById("detailed-options").classList.toggle("detailed-options");
+    const current = document.getElementById("show-detailed-options").innerHTML;
+    document.getElementById("show-detailed-options").innerHTML = current == "arrow_drop_up" ? "arrow_drop_down" : "arrow_drop_up";
+}
+
+function toggleDropdown() {
+    document.getElementById("quick-select").classList.toggle("dropdown-show");
+    const current = document.getElementById("dropdown-button-arrow").innerHTML;
+    document.getElementById("dropdown-button-arrow").innerHTML = current == "arrow_drop_up" ? "arrow_drop_down" : "arrow_drop_up";
+}
+
+const presets = {
+    "Water": [5, 50, 50, 0, 0.01, 0, 0, 0, 1000],
+    "Honey": [6, 100, 100, 95, 0.01, 0, 0, 0, 1000],
+    "Jelly": [6.9, 40, 40, 0, 0.01, 20, 2, 2, 1000],
+    "Air": [0, 120, 183, 14, 0.005, 0, 0, 0, 0],
+};
+
+function selectPreset(preset) {
+    document.getElementById("dropdown-button-text").innerHTML = preset;
+    document.getElementById("dropdown-button-arrow").innerHTML = "arrow_drop_down";
+
+    for (let i = 0; i < sliders.length; i++) {
+        sliders[i].changeStartingValue(presets[preset][i]);
+    }
+}
+
+window.onclick = function (event) {
+    if (!(event.target.matches('#dropdown-button') || event.target.matches("#dropdown-button-text") || event.target.matches("#dropdown-button-arrow"))) {
+        var dropdowns = document.getElementsByClassName("dropdown-content");
+        var i;
+        for (i = 0; i < dropdowns.length; i++) {
+            var openDropdown = dropdowns[i];
+            if (openDropdown.classList.contains('dropdown-show')) {
+                openDropdown.classList.remove('dropdown-show');
+                document.getElementById("dropdown-button-arrow").innerHTML = "arrow_drop_down";
+            }
+        }
+    }
+}
+
+function start() {
+    running = true;
+}
+
+function stopp() {
+    running = false;
+}
+
+const water = [10, 3, 3, 0, 0, 0, 0, 0];
+
+function stepOne() {
+    fluid.update(delta);
+    fluid.draw();
+}
+
+function restart() {
+    const rD = fluid.restDensity;
+    const stiff = fluid.stiffness;
+    const stiffN = fluid.nearStiffness;
+    const visL = fluid.linearViscosity;
+    const visQ = fluid.quadraticViscostiy;
+    const springS = fluid.springStiffness;
+    const yield = fluid.yieldRate;
+    const alpha = fluid.plasticity;
+
+    fluid = new Fluid(fluidAmount);
+    fluid.restDensity = rD;
+    fluid.stiffness = stiff;
+    fluid.nearStiffness = stiffN;
+    fluid.linearViscosity = visL;
+    fluid.quadraticViscostiy = visQ;
+    fluid.springStiffness = springS;
+    fluid.yieldRate = yield;
+    fluid.plasticity = alpha;
+
+    fluid.draw();
+}
+
+function changeRestDensity(newVal) {
+    fluid.restDensity = newVal;
+    fluid.plasticity;
+}
+
+function changeStiffness(newVal) {
+    fluid.stiffness = newVal;
+}
+
+function changeNearStiffness(newVal) {
+    fluid.nearStiffness = newVal;
+}
+
+function changeLinearViscosity(newVal) {
+    fluid.linearViscosity = newVal;
+}
+
+function changeQuadraticViscosity(newVal) {
+    fluid.quadraticViscostiy = newVal;
+}
+
+function changeSpringStiffness(newVal) {
+    const oldVal = fluid.springStiffness;
+    fluid.springStiffness = newVal;
+    if (newVal > oldVal) {
+        fluid.springs = new Map();
+    }
+}
+
+function changeYieldRate(newVal) {
+    fluid.yieldRate = newVal;
+}
+
+function changePlasticity(newVal) {
+    fluid.plasticity = newVal;
+}
+
+function changeGravity(newVal) {
+    fluid.gravity = [0, newVal];
+}
 
 function step(now) {
     if (!previous) { previous = now; };
 
-    let delta = (now - previous) * 0.001; // seconds
+    delta = (now - previous) * 0.001; // seconds
     previous = now;
 
     if (newFps > 0.5) {
@@ -70,18 +159,19 @@ function step(now) {
     accumulatedFps.push(1 / delta);
     newFps += delta;
 
-    const minDelta = 0.01;
+    const minDelta = 0.0069;
     const maxDelta = 0.05;
     delta = Math.max(minDelta, delta);
     delta = Math.min(maxDelta, delta);
 
-    if (delta == minDelta || delta == maxDelta) {
-        console.log("delta was adjusted")
-    }
+    /*     if (delta == minDelta || delta == maxDelta) {
+            console.log("delta was adjusted")
+        } */
 
-    //console.log(delta)
-    Fluid1.update(0.01);
-    Fluid1.draw();
+    if (running) {
+        fluid.update(delta);
+        fluid.draw();
+    }
 
     requestAnimationFrame(step);
 }

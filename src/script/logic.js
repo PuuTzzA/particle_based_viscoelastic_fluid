@@ -178,7 +178,7 @@ class HashGrid {
     }
 }
 
-export class Fluid {
+class Fluid {
     constructor(numParticles) {
         this.particles = [];
         this.springs = new Map();
@@ -194,8 +194,8 @@ export class Fluid {
         this.quadraticViscostiy = 0.01; // beta 
 
         this.springInitRestLenght = 20;
-        this.springStiffness = 100; // kSpring
-        this.alpha = 0.5; // alpha, yield ratio
+        this.springStiffness = 0.01; // kSpring
+        this.plasticity = 0.5; // alpha, yield ratio
         this.yieldRate = 0.2; // gamma, yield ratio
 
         this.maxDistancePerFrame = Number.MAX_VALUE;
@@ -295,9 +295,9 @@ export class Fluid {
 
                     if (r > spring.restLength + d) { // stretch
                         //console.log("grow rest length")
-                        spring.restLength += dt * this.alpha * (r - spring.restLength - d);
+                        spring.restLength += dt * this.plasticity * (r - spring.restLength - d);
                     } else if (r < spring.restLength - d) { // compress
-                        spring.restLength -= dt * this.alpha * (spring.restLength - d - r);
+                        spring.restLength -= dt * this.plasticity * (spring.restLength - d - r);
                     }
                 }
             }
@@ -311,11 +311,10 @@ export class Fluid {
             const dy = otherParticle.position[1] - particle.position[1];
             const r = Math.sqrt(dx * dx + dy * dy);
 
-            if (spring.restLength > this.springInitRestLenght || r > this.influenceRadius && (particle.selected || otherParticle.selected)) {
+            if (spring.restLength > this.influenceRadius || r > this.influenceRadius && (particle.selected || otherParticle.selected)) {
                 this.springs.delete(hash);
             }
         })
-        console.log(this.springs.size)
     }
 
     applySpringDisplacement(dt) {
