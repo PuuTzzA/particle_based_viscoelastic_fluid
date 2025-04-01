@@ -75,8 +75,7 @@ function stopp() {
 const water = [10, 3, 3, 0, 0, 0, 0, 0];
 
 function stepOne() {
-    fluid.update(delta);
-    fluid.draw();
+    fluid.updateAndDraw(delta);
 }
 
 function restart() {
@@ -101,7 +100,7 @@ function restart() {
     fluid.plasticity = alpha;
     fluid.gravity = gravity;
 
-    fluid.draw();
+    fluid.updateAndDraw();
 }
 
 function changeRestDensity(newVal) {
@@ -162,7 +161,7 @@ function step(now) {
     newFps += delta;
 
     const minDelta = 0.0069;
-    const maxDelta = 0.05;
+    const maxDelta = 0.03;
     delta = Math.max(minDelta, delta);
     delta = Math.min(maxDelta, delta);
 
@@ -171,8 +170,7 @@ function step(now) {
         } */
 
     if (running) {
-        fluid.update(delta);
-        fluid.draw();
+        fluid.updateAndDraw(delta);
     }
 
     requestAnimationFrame(step);

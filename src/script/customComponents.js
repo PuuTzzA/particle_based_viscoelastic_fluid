@@ -63,7 +63,6 @@ class MySlider extends HTMLElement {
     }
 }
 
-
 customElements.define("my-slider", MySlider);
 
 class MyButton extends HTMLElement {

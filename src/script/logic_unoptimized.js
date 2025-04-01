@@ -117,20 +117,18 @@ class HashGrid {
         this.count.fill(0);
         this.condensedArray.fill(0);
 
-        for (let i = 0, n = particles.length; i < n; i++) {
-            const particle = particles[i];
+        particles.forEach(particle => {
             this.count[this.hashPosition(particle.position)] += 1;
-        }
+        })
 
         for (let i = 1; i < this.tableSize + 1; i++) {
             this.count[i] = this.count[i - 1] + this.count[i];
         }
 
-        for (let i = 0, n = particles.length; i < n; i++) {
-            const particle = particles[i];
+        particles.forEach((particle, index) => {
             const hash = this.hashPosition(particle.position);
-            this.condensedArray[--this.count[hash]] = i;
-        }
+            this.condensedArray[--this.count[hash]] = index;
+        })
     }
 
     query(position, radius) { // too slow, which is sad
@@ -205,7 +203,6 @@ class Fluid {
         this.mousePos = [0, 0];
         this.mousePosPrev = [0, 0];
         this.mouseRadius = 100;
-        this.mouseRadiusSquared = this.mouseRadius * this.mouseRadius;
         this.mousePressed = false;
         this.mouseForce = 200;
         this.hashGrid = new HashGrid(numParticles, this.influenceRadius);
@@ -221,15 +218,6 @@ class Fluid {
     applyViscosity(dt) {
         for (let i = 0, n = this.particles.length; i < n; i++) {
             const particle = this.particles[i];
-
-            // mouse selection start
-            particle.selected = 0;
-            const dx = particle.position[0] - this.mousePos[0];
-            const dy = particle.position[1] - this.mousePos[1];
-            if (dx * dx + dy * dy < this.mouseRadiusSquared) {
-                particle.selected = 1;
-            }
-            // mouse selection end
 
             this.hashGrid.queryWithoutIterator(particle.position)
 
@@ -313,23 +301,6 @@ class Fluid {
                     }
                 }
             }
-
-            // collision handling
-            if (particle.position[0] < 0) {
-                particle.position[0] = 0;
-            }
-
-            if (particle.position[0] > canvas.width) {
-                particle.position[0] = canvas.width;
-            }
-
-            if (particle.position[1] < 0) {
-                particle.position[1] = 0;
-            }
-
-            if (particle.position[1] > canvas.height) {
-                particle.position[1] = canvas.height;
-            }
         }
 
         this.springs.forEach((spring, hash) => {
@@ -341,37 +312,41 @@ class Fluid {
             const r = Math.sqrt(dx * dx + dy * dy);
 
             if (spring.restLength > this.influenceRadius || r > this.influenceRadius && (particle.selected || otherParticle.selected)) {
-
                 this.springs.delete(hash);
-
-            } else {
-
-                const particle = this.particles[spring.i];
-                const otherParticle = this.particles[spring.j];
-
-                if (this.mousePressed && particle.selected) { return; };
-
-                const dx = otherParticle.position[0] - particle.position[0];
-                const dy = otherParticle.position[1] - particle.position[1];
-                const r = Math.sqrt(dx * dx + dy * dy);
-
-                let dir = [0, 0];
-                if (r > 0) {
-                    dir = [dx / r, dy / r];
-                }
-
-                let displacement = dt * this.springStiffness * (1 - spring.restLength / this.influenceRadius) * (spring.restLength - r);
-
-                particle.position[0] -= displacement * dir[0] / 2;
-                particle.position[1] -= displacement * dir[1] / 2;
-
-                otherParticle.position[0] += displacement * dir[0] / 2;
-                otherParticle.position[1] += displacement * dir[1] / 2;
             }
         })
     }
 
     applySpringDisplacement(dt) {
+        this.springs.forEach((spring, hash) => {
+            const particle = this.particles[spring.i];
+            const otherParticle = this.particles[spring.j];
+
+            if (this.mousePressed && particle.selected) { return; };
+
+            const dx = otherParticle.position[0] - particle.position[0];
+            const dy = otherParticle.position[1] - particle.position[1];
+            const r = Math.sqrt(dx * dx + dy * dy);
+
+            let dir = [0, 0];
+            if (r > 0) {
+                dir = [dx / r, dy / r];
+            }
+
+            let displacement = dt * this.springStiffness * (1 - spring.restLength / this.influenceRadius) * (spring.restLength - r);
+
+            /* if (!isFinite(u)) {
+                console.error("NaN detected in u", { particle, otherParticle, dir });
+                return; // Exit early if NaN is found
+            } */
+
+            particle.position[0] -= displacement * dir[0] / 2;
+            particle.position[1] -= displacement * dir[1] / 2;
+
+            otherParticle.position[0] += displacement * dir[0] / 2;
+            otherParticle.position[1] += displacement * dir[1] / 2;
+
+        });
     }
 
     doubleDensityRelaxation(dt) {
@@ -402,6 +377,22 @@ class Fluid {
                     densityNear += q * q * q;
                 }
             }
+
+            /* this.particles.forEach(otherParticle => {
+                const dx = otherParticle.position[0] - particle.position[0];
+                const dy = otherParticle.position[1] - particle.position[1];
+                const r = Math.sqrt(dx * dx + dy * dy);
+ 
+                let q = r / this.influenceRadius;
+ 
+                if (q < 1) {
+                    neighbours.push(otherParticle);
+ 
+                    q = 1 - q;
+                    density += q * q
+                    densityNear += q * q * q;
+                }
+            }) */
 
             const pressure = this.stiffness * (density - this.restDensity);
             const pressureNear = this.nearStiffness * densityNear;
@@ -445,10 +436,65 @@ class Fluid {
     }
 
     resolveCollisions() {
+        for (let i = 0, n = this.particles.length; i < n; i++) {
+            const particle = this.particles[i];
+
+            if (particle.position[0] < 0) {
+                particle.position[0] = 0;
+            }
+
+            if (particle.position[0] > canvas.width) {
+                particle.position[0] = canvas.width;
+            }
+
+            if (particle.position[1] < 0) {
+                particle.position[1] = 0;
+            }
+
+            if (particle.position[1] > canvas.height) {
+                particle.position[1] = canvas.height;
+            }
+        }
     }
 
-    updateAndDraw(dt) {
+    update(dt) {
         this.hashGrid.update(this.particles);
+
+        for (let i = 0, n = this.particles.length; i < n; i++) {
+            this.particles[i].selected = 0;
+        }
+
+        for (const i of this.hashGrid.query(this.mousePos, this.mouseRadius)) {
+            const other = this.particles[i];
+
+            const dx = other.position[0] - this.mousePos[0];
+            const dy = other.position[1] - this.mousePos[1];
+
+            if (Math.sqrt(dx * dx + dy * dy) < this.mouseRadius) {
+                other.selected = 1;
+            }
+        }
+
+        // apply gravity
+        for (let i = 0, n = this.particles.length; i < n; i++) {
+            const particle = this.particles[i];
+
+            if (this.mousePressed && particle.selected) {
+                continue;
+            }
+
+            /* if (this.mousePressed && particle.selected) {
+                let dirToInput = [this.mousePos[0] - particle.position[0], this.mousePos[1] - particle.position[1]];
+                let dst = Math.sqrt(dirToInput[0] * dirToInput[0] + dirToInput[1] * dirToInput[1]);
+                dst = Math.max(dst, 0.0001);
+                let t = 1 - dst / this.mouseRadius;
+                particle.velocity[0] += dt * t * dirToInput[0] * this.mouseForce;
+                particle.velocity[1] += dt * t * dirToInput[1] * this.mouseForce;
+            } */
+
+            particle.velocity[0] += dt * this.gravity[0];
+            particle.velocity[1] += dt * this.gravity[1];
+        }
 
         // modify velocities with pairwise viscosity impulses
         this.applyViscosity(dt);
@@ -462,35 +508,26 @@ class Fluid {
                 continue;
             }
 
-            // gravity
-            particle.velocity[0] += dt * this.gravity[0];
-            particle.velocity[1] += dt * this.gravity[1];
-            // velocity
+
+
             particle.position[0] += dt * particle.velocity[0];
             particle.position[1] += dt * particle.velocity[1];
         }
-
-        this.doubleDensityRelaxation(dt);
 
         // add and remove springs, change rest lengths
         this.adjustSprings(dt);
 
         // modify positions according to springs
         // double density relaxation and collisions
-        // this.applySpringDisplacement(dt); // now inside adjust springs
-        // this.resolveCollisions(); // now inside adjust springs
+        this.applySpringDisplacement(dt);
+        this.doubleDensityRelaxation(dt);
+        this.resolveCollisions();
 
         const mouseDelta = [this.mousePos[0] - this.mousePosPrev[0], this.mousePos[1] - this.mousePosPrev[1]]
         this.mousePosPrev = [...this.mousePos];
 
-        // calculate velocities and draw
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = "black";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        ctx.strokeStyle = this.gs.getLineColour();
-        ctx.lineWidth = this.gs.getLineWidth();
-
+        // calculate velocities
         for (let i = 0, n = this.particles.length; i < n; i++) {
             const particle = this.particles[i];
 
@@ -501,15 +538,22 @@ class Fluid {
                 }
             }
 
+            /* const dx = particle.position[0] - particle.positionPrevious[0];
+            const dy = particle.position[1] - particle.positionPrevious[1];
+ 
+            if (!particle.selected && Math.sqrt(dx * dx + dy * dy) > this.maxDistancePerFrame) {                
+                let dir = [particle.position[0] - particle.positionPrevious[0], particle.position[1] - particle.positionPrevious[1]];
+                const len = Math.sqrt(dir[0] * dir[0] + dir[1] * dir[1]);
+                dir[0] /= len;
+                dir[1] /= len;
+ 
+                particle.position = [particle.positionPrevious[0] + this.maxDistancePerFrame * dir[0], particle.positionPrevious[1] + this.maxDistancePerFrame * dir[1]];
+                // particle.position = [...particle.positionPrevious];
+            } */
+
+
             particle.velocity[0] = (particle.position[0] - particle.positionPrevious[0]) / dt;
             particle.velocity[1] = (particle.position[1] - particle.positionPrevious[1]) / dt;
-
-            ctx.fillStyle = this.gs.getParticleColour(particle);
-
-            ctx.beginPath();
-            ctx.arc(particle.position[0], particle.position[1], this.gs.getParticleRadius(), 0, Math.PI * 2, true); // Outer circle
-            ctx.stroke();
-            ctx.fill();
         }
     }
 
