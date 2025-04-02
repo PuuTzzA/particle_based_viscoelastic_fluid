@@ -1,4 +1,4 @@
-f# Particle Based Viscoelastic Fluid
+# Particle Based Viscoelastic Fluid
 
 Based on this paper: [Particle-based Viscoelastic Fluid Simulation](https://dl.acm.org/doi/abs/10.1145/1073368.1073400)
 
