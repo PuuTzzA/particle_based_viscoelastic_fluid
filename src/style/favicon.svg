@@ -24,9 +24,9 @@
      inkscape:deskcolor="#000000"
      inkscape:document-units="px"
      showgrid="false"
-     inkscape:zoom="0.39827015"
-     inkscape:cx="510.95971"
-     inkscape:cy="567.45403"
+     inkscape:zoom="0.37723109"
+     inkscape:cx="701.16172"
+     inkscape:cy="585.84779"
      inkscape:window-width="1440"
      inkscape:window-height="878"
      inkscape:window-x="-6"
@@ -42,14 +42,14 @@
      inkscape:groupmode="layer"
      id="layer1">
     <path
-       id="path1"
-       style="fill:#ff0062;fill-opacity:1;stroke:#000000;stroke-width:64.0303;stroke-dasharray:none;paint-order:stroke fill markers"
-       d="m 118.58421,210.45032 c 0,23.90539 -19.379146,43.28453 -43.284526,43.28453 -23.90539,0 -43.284535,-19.37914 -43.284536,-43.28453 2e-6,-23.9054 39.668866,-65.26558 43.284536,-68.88125 3.61567,3.61567 43.284526,44.97585 43.284526,68.88125 z"
+       id="path2"
+       style="fill:#8800ff;fill-opacity:1;stroke:#000000;stroke-width:79.375;stroke-dasharray:none;paint-order:stroke fill markers"
+       d="m 240.33971,139.07866 c 0,27.77528 -22.5163,50.29158 -50.29156,50.29158 -27.77526,0 -50.29158,-22.5163 -50.29158,-50.29158 0,-27.77528 46.0906,-75.83098 50.29158,-80.031967 4.201,4.200987 50.29156,52.256687 50.29156,80.031967 z"
        sodipodi:nodetypes="ssscs" />
     <path
-       id="path2"
-       style="fill:#8800ff;fill-opacity:1;stroke:#000000;stroke-width:64.0303;stroke-dasharray:none;paint-order:stroke fill markers"
-       d="m 253.73485,114.15751 c 0,23.90539 -19.37914,43.28453 -43.28452,43.28453 -23.90539,0 -43.28454,-19.37914 -43.28454,-43.28453 0,-23.905403 39.66887,-65.265583 43.28454,-68.881253 3.61567,3.61567 43.28452,44.97585 43.28452,68.881253 z"
+       id="path1"
+       style="fill:#ff0062;fill-opacity:1;stroke:#000000;stroke-width:92.6042;stroke-dasharray:none;paint-order:stroke fill markers"
+       d="m 156.16421,184.45815 c 0,28.75727 -23.31238,52.06964 -52.06967,52.06964 -28.757272,0 -52.069652,-23.31237 -52.069653,-52.06964 2e-6,-28.75731 47.72015,-78.51205 52.069653,-82.86156 4.34952,4.34951 52.06967,54.10425 52.06967,82.86156 z"
        sodipodi:nodetypes="ssscs" />
   </g>
 </svg>

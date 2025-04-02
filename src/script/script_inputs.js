@@ -22,7 +22,7 @@ let fluidAmount = 1000;
 let fluid = new Fluid(fluidAmount); // 5000 particles	
 fluid.draw();
 
-function toggleDetailedOptions(){
+function toggleDetailedOptions() {
     document.getElementById("detailed-options").classList.toggle("detailed-options");
     const current = document.getElementById("show-detailed-options").innerHTML;
     document.getElementById("show-detailed-options").innerHTML = current == "arrow_drop_up" ? "arrow_drop_down" : "arrow_drop_up";
@@ -35,10 +35,10 @@ function toggleDropdown() {
 }
 
 const presets = {
-    "Water": [5, 50, 50, 0, 0.01, 0, 0, 0, 1000],
-    "Honey": [6, 100, 100, 95, 0.01, 0, 0, 0, 1000],
-    "Jelly": [6.9, 40, 40, 0, 0.01, 20, 2, 2, 1000],
-    "Air": [0, 120, 183, 14, 0.005, 0, 0, 0, 0],
+    "Water": [5, 50, 50, 0, 0.01, 0, 0, 1000],
+    "Honey": [6, 100, 100, 95, 0.01, 0, 0, 1000],
+    "Jelly": [6.9, 40, 40, 0, 0.01, 20, .7, 1000],
+    "Air": [0, 120, 183, 14, 0.005, 0, 0, 0],
 };
 
 function selectPreset(preset) {
@@ -72,8 +72,6 @@ function stopp() {
     running = false;
 }
 
-const water = [10, 3, 3, 0, 0, 0, 0, 0];
-
 function stepOne() {
     fluid.updateAndDraw(delta);
 }
@@ -100,7 +98,7 @@ function restart() {
     fluid.plasticity = alpha;
     fluid.gravity = gravity;
 
-    fluid.updateAndDraw();
+    fluid.draw();
 }
 
 function changeRestDensity(newVal) {

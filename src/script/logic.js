@@ -178,10 +178,33 @@ class HashGrid {
             }
         }
     }
+
+    queryWithoutIteratorBiggerRegion(position) {
+        this.queryCount = 0;
+
+        const xMin = this.intCoords(position[0]) - 2;
+        const xMax = this.intCoords(position[0]) + 2;
+        const yMin = this.intCoords(position[1]) - 2;
+        const yMax = this.intCoords(position[1]) + 2;
+
+        for (let xi = xMin; xi <= xMax; xi++) {
+            for (let yi = yMin; yi <= yMax; yi++) {
+                const hash = HashGrid.hash(xi, yi, this.tableSize);
+
+                const startIndex = this.count[hash];
+                const endIndex = this.count[hash + 1];
+
+                for (let i = startIndex; i < endIndex; i++) {
+                    this.queryResultArray[this.queryCount++] = this.condensedArray[i];
+                }
+            }
+        }
+    }
 }
 
 class Fluid {
     constructor(numParticles) {
+        this.running = true;
         this.particles = [];
         this.springs = new Map();
         this.gs = new GraphicsSettings();
@@ -281,7 +304,7 @@ class Fluid {
         for (let i = 0, n = this.particles.length; i < n; i++) {
             const particle = this.particles[i];
 
-            this.hashGrid.queryWithoutIterator(particle.position)
+            this.hashGrid.queryWithoutIteratorBiggerRegion(particle.position)
 
             for (let potNeighbourId = 0, max = this.hashGrid.queryCount; potNeighbourId < max; potNeighbourId++) {
                 const j = this.hashGrid.queryResultArray[potNeighbourId];
@@ -303,13 +326,12 @@ class Fluid {
 
                     const spring = this.springs.get(hash);
 
-                    let d = this.yieldRate * spring.restLength;
+                    let d = this.plasticity * spring.restLength;
 
                     if (r > spring.restLength + d) { // stretch
-                        //console.log("grow rest length")
                         spring.restLength += dt * this.plasticity * (r - spring.restLength - d);
                     } else if (r < spring.restLength - d) { // compress
-                        spring.restLength -= dt * this.plasticity * (spring.restLength - d - r);
+                        spring.restLength -= d, spring.restLength - dt * this.plasticity * (spring.restLength - d - r);
                     }
                 }
             }
@@ -338,9 +360,10 @@ class Fluid {
 
             const dx = otherParticle.position[0] - particle.position[0];
             const dy = otherParticle.position[1] - particle.position[1];
-            const r = Math.sqrt(dx * dx + dy * dy);
+            const r = dx * dx + dy * dy;
 
-            if (spring.restLength > this.influenceRadius || r > this.influenceRadius && (particle.selected || otherParticle.selected)) {
+            const radiusDouble = this.influenceRadius * (2 - this.plasticity);
+            if (spring.restLength > radiusDouble || r > radiusDouble * radiusDouble && (particle.selected || otherParticle.selected)) {
 
                 this.springs.delete(hash);
 
@@ -348,8 +371,6 @@ class Fluid {
 
                 const particle = this.particles[spring.i];
                 const otherParticle = this.particles[spring.j];
-
-                if (this.mousePressed && particle.selected) { return; };
 
                 const dx = otherParticle.position[0] - particle.position[0];
                 const dy = otherParticle.position[1] - particle.position[1];
@@ -448,6 +469,7 @@ class Fluid {
     }
 
     updateAndDraw(dt) {
+        if (!this.running) return;
         this.hashGrid.update(this.particles);
 
         // modify velocities with pairwise viscosity impulses
