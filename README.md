@@ -2,7 +2,7 @@
 
 Based on this paper: [Particle-based Viscoelastic Fluid Simulation](https://dl.acm.org/doi/abs/10.1145/1073368.1073400)
 
-Play with it yourself: [sandbox](https://puutzza.github.io/particle_based_viscoelastic_fluid/)
+Exploare it yourself: [sandbox](https://puutzza.github.io/particle_based_viscoelastic_fluid/)
 
 ## Parameters
 
