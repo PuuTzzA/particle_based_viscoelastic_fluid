@@ -261,6 +261,12 @@ class Fluid {
 
                 let otherParticle = this.particles[this.hashGrid.queryResultArray[potNeighbourId]];
 
+                if (otherParticle === undefined || particle === undefined) {
+                    this.running = false;
+                    console.log("stopped running");
+                    return;
+                };
+
                 const dx = otherParticle.position[0] - particle.position[0];
                 const dy = otherParticle.position[1] - particle.position[1];
                 const r = Math.sqrt(dx * dx + dy * dy);
@@ -311,6 +317,12 @@ class Fluid {
                 if (j >= i) { continue };
 
                 let otherParticle = this.particles[j];
+
+                if (otherParticle === undefined || particle === undefined) {
+                    this.running = false;
+                    console.log("stopped running");
+                    return;
+                };
 
                 const dx = otherParticle.position[0] - particle.position[0];
                 const dy = otherParticle.position[1] - particle.position[1];
@@ -409,6 +421,12 @@ class Fluid {
             for (let potNeighbourId = 0, max = this.hashGrid.queryCount; potNeighbourId < max; potNeighbourId++) {
                 let otherParticle = this.particles[this.hashGrid.queryResultArray[potNeighbourId]];
 
+                if (otherParticle === undefined || particle === undefined) {
+                    this.running = false;
+                    console.log("stopped running");
+                    return;
+                };
+                
                 const dx = otherParticle.position[0] - particle.position[0];
                 const dy = otherParticle.position[1] - particle.position[1];
                 const r = Math.sqrt(dx * dx + dy * dy);
