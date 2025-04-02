@@ -1,8 +1,8 @@
-# Particle Based Viscoelastic Fluid
+f# Particle Based Viscoelastic Fluid
 
 Based on this paper: [Particle-based Viscoelastic Fluid Simulation](https://dl.acm.org/doi/abs/10.1145/1073368.1073400)
 
-Exploare it yourself: [sandbox](https://puutzza.github.io/particle_based_viscoelastic_fluid/)
+Explore it yourself: [sandbox](https://puutzza.github.io/particle_based_viscoelastic_fluid/)
 
 ## Parameters
 
